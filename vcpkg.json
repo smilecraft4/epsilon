@@ -1,7 +1,10 @@
 {
-    "dependencies": [
-        "catch2",
-        "spdlog",
-        "sdl2pp"
-    ]
+  "dependencies": [
+    "glad",
+    "glfw3",
+    "glm",
+    "catch2",
+    "spdlog",
+    "sdl2pp"
+  ]
 }
