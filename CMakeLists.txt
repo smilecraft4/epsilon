@@ -13,10 +13,11 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 add_executable(SoftwareRasterizer
-    "src/main.cpp"
-    "src/Screen.cpp"
-    "src/Screen.h"
-  )
+  "src/main.cpp"
+  "src/Window.h"
+  "src/Screen.cpp"
+  "src/Screen.h"
+)
 
 target_include_directories(SoftwareRasterizer PRIVATE ${SDL2PP_INCLUDE_DIRS})
 
