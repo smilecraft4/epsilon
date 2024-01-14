@@ -1,0 +1,7 @@
+{
+    "dependencies": [
+        "catch2",
+        "spdlog",
+        "sdl2pp"
+    ]
+}
