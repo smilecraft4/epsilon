@@ -9,6 +9,7 @@
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "Rasterizer.h"
 #include "Texture.h"
 
 class Window {
@@ -19,19 +20,29 @@ class Window {
     void SetTitle(const std::string &title);
 
     bool Running() const;
+    void Render(float delta_time);
 
-    //void RenderScreen(const Screen *screen);
-    void RenderTexture(const Texture<uint32_t> *texture);
+    void RenderTexture(const Texture<Color> *texture);
     void Cleanup();
 
     static void PollEvents();
     static void Init(int argc, char **argv);
     static void Terminate();
 
-  private:
+  protected:
+    virtual void OnRender(float delta_time) = 0;
+    virtual void OnResizeEvent(int width, int height) = 0;
+    virtual void OnMouseMoveEvent(float x, float y) = 0;
+    virtual void OnKeyEvent(int key, int action) = 0;
+    virtual void OnMouseButtonEvent(int button, int action) = 0;
+
     int width_;
     int height_;
     std::string name_;
+
+  private:
+
+    std::shared_ptr<Rasterizer> rasterizer_;
 
     GLFWwindow *glfw_window_;
     static void GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods);

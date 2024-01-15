@@ -15,13 +15,17 @@ template <PixelFormat T> struct Texture {
     std::vector<T> pixels;
 
     void SetPixel(size_t x, size_t y, T pixel) {
-        size_t i = x + y * width;
-        pixels[i] = pixel;
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            size_t i = x + y * width;
+            pixels[i] = pixel;
+        }
     }
 
     T GetPixel(size_t x, size_t y) {
-        size_t i = x + y * width;
-        return pixels[i];
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            size_t i = x + y * width;
+            return pixels[i];
+        }
     }
 
     Texture() = default;

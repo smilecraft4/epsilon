@@ -31,17 +31,27 @@ struct Viewport {
 
 class Rasterizer {
   public:
-    Rasterizer();
+    Rasterizer(int width, int height);
     ~Rasterizer() = default;
 
+    void Clear();
+    void DrawVertex(Vertex a);
     void DrawLine(Vertex a, Vertex b);
     void DrawTriangle(Vertex a, Vertex b, Vertex c);
     void DrawMesh(/**/);
 
+    const Texture<Color> *ColorBuffer();
+
   private:
-    std::unique_ptr<Texture<uint32_t>> color_buffer_;
-    std::unique_ptr<Texture<uint16_t>> depth_buffer_;
+    Vector3 ViewportToScreenspace(Vector3 a);
+
+    int width_;
+    int height_;
 
     float far_clip;
     float near_clip;
+
+    std::unique_ptr<Texture<Color>> color_buffer_;
+    // std::unique_ptr<Texture<uint16_t>> depth_buffer_;
+
 };

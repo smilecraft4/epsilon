@@ -118,7 +118,10 @@ void Window::RenderScreen(const Screen *screen) {
     glfwSwapBuffers(glfw_window_);
 }*/
 
-void Window::RenderTexture(const Texture<uint32_t> *texture) {
+void Window::RenderTexture(const Texture<Color> *texture) {
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
     // Create the texture to be rendered
     glDeleteTextures(1, &screen_texture_);
     glGenTextures(1, &screen_texture_);
@@ -130,9 +133,6 @@ void Window::RenderTexture(const Texture<uint32_t> *texture) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  texture->pixels.data());
     glGenerateMipmap(screen_texture_);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(screen_program_);
     glBindTexture(GL_TEXTURE_2D, screen_texture_);
@@ -152,6 +152,11 @@ void Window::Cleanup() {
     glDeleteVertexArrays(1, &screen_vao_);
 
     glfwDestroyWindow(glfw_window_);
+}
+
+void Window::Render(float delta_time) {
+    OnRender(delta_time);
+    //glfwSwapBuffers(glfw_window_);
 }
 
 void Window::SetTitle(const std::string &title) {
@@ -176,6 +181,9 @@ void Window::Terminate() { glfwTerminate(); }
 
 void Window::PollEvents() { glfwPollEvents(); }
 
+void Window::GlfwDropCallback(GLFWwindow *glfw_window, int path_count, const char *paths[]) {
+    auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+}
 void Window::GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
 
@@ -186,15 +194,15 @@ void Window::GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int
             window->texture_sampling_mode_ = GL_NEAREST;
         }
     }
-}
-void Window::GlfwDropCallback(GLFWwindow *glfw_window, int path_count, const char *paths[]) {
-    auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+
+    window->OnKeyEvent(key, action);
 }
 void Window::GlfwScrollCallback(GLFWwindow *glfw_window, double xoffset, double yoffset) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
 }
 void Window::GlfwCursorPosCallback(GLFWwindow *glfw_window, double xpos, double ypos) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+    window->OnMouseMoveEvent(xpos, ypos);
 }
 void Window::GlfwCursorEnterCallback(GLFWwindow *glfw_window, int entered) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
@@ -207,6 +215,7 @@ void Window::GlfwWindowSizeCallback(GLFWwindow *glfw_window, int width, int heig
 }
 void Window::GlfwMouseButtonCallback(GLFWwindow *glfw_window, int button, int action, int mods) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+    window->OnMouseButtonEvent(button, action);
 }
 void Window::GlfwWindowCloseCallback(GLFWwindow *glfw_window) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
@@ -222,6 +231,10 @@ void Window::GlfwFramebufferSizeCallback(GLFWwindow *glfw_window, int width, int
     window->width_ = width;
     window->height_ = height;
     glViewport(0, 0, width, height);
+
+    window->OnResizeEvent(width, height);
+
+    window->Render(1.0f);
 }
 
 void Window::GlfwErrorCallback(int error_code, const char *description) {
