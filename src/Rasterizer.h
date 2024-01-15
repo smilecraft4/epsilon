@@ -5,7 +5,7 @@
 #include "Core/Colors.h"
 #include "Core/Maths.h"
 #include "Core/Vectors.h"
-#include "Screen.h"
+#include "Texture.h"
 
 struct Vertex {
     Vector3 position;
@@ -31,14 +31,17 @@ struct Viewport {
 
 class Rasterizer {
   public:
-    Rasterizer(std::shared_ptr<Screen> screen);
+    Rasterizer();
     ~Rasterizer() = default;
 
     void DrawLine(Vertex a, Vertex b);
-    void DrawTriangle(/**/);
+    void DrawTriangle(Vertex a, Vertex b, Vertex c);
     void DrawMesh(/**/);
 
   private:
+    std::unique_ptr<Texture<uint32_t>> color_buffer_;
+    std::unique_ptr<Texture<uint16_t>> depth_buffer_;
+
     float far_clip;
     float near_clip;
 };

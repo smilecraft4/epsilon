@@ -2,15 +2,15 @@
 
 #include "Core/Maths.h"
 #include "Rasterizer.h"
-#include "Screen.h"
 #include "Window.h"
 
+#include "Texture.h"
+
 static Color RandomColor() {
-    Color c;
+    Color c{};
     c.r = rand() % 255;
     c.g = rand() % 255;
     c.b = rand() % 255;
-    c.a = rand() % 255;
     return c;
 }
 
@@ -26,71 +26,71 @@ static Vector3 RandomPosition(Vector3 min, Vector3 max) {
     return p;
 }
 
-static void RandomVertices(int count, std::vector<Vertex> *vertices) {
+static void RandomVertices(int count, std::vector<Vertex> *vertices, std::vector<float> *offset) {
     vertices->clear();
+    offset->clear();
     for (size_t i = 0; i < (size_t)(count * 2); i++) {
-        Vertex a{};
+        offset->push_back(RandomFloat(0.0f, 100.0f) * 10.0f);
 
-        a.color = RandomColor();
-        a.position = RandomPosition({0.0, 0.0, 0.0}, {1.0, 1.0, 1.0});
-
-        vertices->push_back(a);
+        for (size_t j = 0; j < 2; j++) {
+            Vertex a{};
+            a.color = RandomColor();
+            a.position = RandomPosition({0.0, 0.0, 0.0}, {1.0, 1.0, 1.0});
+            vertices->push_back(a);
+        }
     }
 }
 
-static void DrawPairOfLines(Screen *screen, const std::vector<Vertex> &vertices, float total_time) {
-    for (size_t i = 0; i < vertices.size() / 2; i++) {
-        srand(i);
-        float offset = RandomFloat(0.0f, 100.0f) * 10.0f;
+static uint32_t ColorToHex(Color color) { return *reinterpret_cast<uint32_t *>(&color); }
 
-        float time = (cos(total_time + offset) + 1.0f) * 0.5f; // goes from 0 to 1
+static void DrawPairOfLines(Texture<uint32_t> *texture, const std::vector<Vertex> &vertices,
+                            const std::vector<float> &offset, float total_time) {
+    for (size_t i = 0; i < vertices.size() / 2; i++) {
+        float time = (cos(total_time + offset[i]) + 1.0f) * 0.5f; // goes from 0 to 1
 
         Vertex c = Vertex::Lerp(vertices[i * 2 + 0], vertices[i * 2 + 1], time);
 
-        Vector2Int a_pos{};
-        a_pos.x = floor(vertices[i * 2 + 0].position.x * screen->Width());
-        a_pos.y = floor(vertices[i * 2 + 0].position.y * screen->Height());
-        //screen->SetPixel(a_pos, vertices[i * 2 + 0].color);
+        // Vector2Int a_pos{};
+        // a_pos.x = (vertices[i * 2 + 0].position.x * texture->width);
+        // a_pos.y = (vertices[i * 2 + 0].position.y * texture->height);
+        // screen->SetPixel(a_pos, vertices[i * 2 + 0].color);
 
-        Vector2Int b_pos{};
-        b_pos.x = floor(vertices[i * 2 + 1].position.x * screen->Width());
-        b_pos.y = floor(vertices[i * 2 + 1].position.y * screen->Height());
-        //screen->SetPixel(b_pos, vertices[i * 2 + 1].color);
+        // Vector2Int b_pos{};
+        // b_pos.x = (vertices[i * 2 + 1].position.x * texture->width);
+        // b_pos.y = (vertices[i * 2 + 1].position.y * texture->height);
+        // screen->SetPixel(b_pos, vertices[i * 2 + 1].color);
 
         Vector2Int c_pos{};
-        c_pos.x = floor(c.position.x * screen->Width());
-        c_pos.y = floor(c.position.y * screen->Height());
-        screen->SetPixel(c_pos, c.color);
+        c_pos.x = (c.position.x * texture->width);
+        c_pos.y = (c.position.y * texture->height);
+        texture->SetPixel(c_pos.x, c_pos.y, ColorToHex(c.color));
     }
 }
 
 int main(int argc, char *argv[]) {
     Window::Init(argc, argv);
 
-    auto window = std::make_unique<Window>(800, 600, "Epsilon - Software Rasterizer");
-    auto screen = std::make_unique<Screen>(800, 600, 0x000000FF);
+    Window window(800, 600, "Epsilon - Software Rasterizer");
 
-    std::vector<Vertex> vertices;
-    RandomVertices(8192*4, &vertices);
+    Texture<uint32_t> texture(800, 600);
 
     double last_time = 0, current_time = 0, delta_time = 0.0;
-    while (window->Running()) {
+    while (window.Running()) {
         last_time = current_time;
         current_time = glfwGetTime();
         delta_time = current_time - last_time;
-
-        screen->Clear(0x000000FF);
-
-        DrawPairOfLines(screen.get(), vertices, current_time);
-
-        window->RenderScreen(screen.get());
-        window->SetTitle(
-            std::format("Epsilon - Software Rasterizer | {:.1f}fps | {:.4f}ms", 1.0 / delta_time, delta_time));
-
+        window.SetTitle(std::format("Epsilon | {:.1f}fps | {:.4f}ms", 1.0 / delta_time, delta_time));
         Window::PollEvents();
+
+        // Drawing happens here
+        texture.Fill(0xFF000000u);
+
+
+        // Presenting here
+        window.RenderTexture(&texture);
     }
 
-    window->Cleanup();
+    window.Cleanup();
 
     Window::Terminate();
 

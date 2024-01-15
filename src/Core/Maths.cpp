@@ -1,6 +1,7 @@
 #include "Maths.h"
 
 
+// TODO: add simd instructions
 // TODO: make sure nothing goes wrong when t > 1 or t < 0
 float Lerpf(float a, float b, float t) {
     float c = a * (1.0f - t) + b * t;

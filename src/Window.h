@@ -9,7 +9,7 @@
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "Screen.h"
+#include "Texture.h"
 
 class Window {
   public:
@@ -20,7 +20,8 @@ class Window {
 
     bool Running() const;
 
-    void RenderScreen(const Screen *screen);
+    //void RenderScreen(const Screen *screen);
+    void RenderTexture(const Texture<uint32_t> *texture);
     void Cleanup();
 
     static void PollEvents();

@@ -13,17 +13,21 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 add_executable(epsilon
-  "src/main.cpp"
-  "src/Core/Colors.h"
-  "src/Core/Vectors.h"
-  "src/Core/Maths.h"
-  "src/Window.h"
-  "src/Window.cpp"
-  "src/Screen.h"
-  "src/Screen.cpp"
-  "src/Rasterizer.h"
-  "src/Rasterizer.cpp"
- "src/Core/Maths.cpp")
+ "src/main.cpp"
+ "src/Core/Colors.h"
+ "src/Core/Vectors.h"
+ "src/Core/Maths.h"
+ "src/Window.h"
+ "src/Window.cpp"
+ 
+ 
+ "src/Rasterizer.h"
+ "src/Rasterizer.cpp"
+ "src/Core/Maths.cpp" 
+ "src/Texture.h"
+)
+
+target_precompile_headers(epsilon PRIVATE "src/pch.h")
 
 target_include_directories(epsilon PRIVATE ${SDL2PP_INCLUDE_DIRS})
 
