@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(SoftwareRasterizer)
+project(Epsilon)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,18 +12,21 @@ find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_executable(SoftwareRasterizer
+add_executable(epsilon
   "src/main.cpp"
+  "src/Core/Colors.h"
+  "src/Core/Vectors.h"
   "src/Window.h"
-  "src/Screen.cpp"
+  "src/Window.cpp"
   "src/Screen.h"
+  "src/Screen.cpp"
 )
 
-target_include_directories(SoftwareRasterizer PRIVATE ${SDL2PP_INCLUDE_DIRS})
+target_include_directories(epsilon PRIVATE ${SDL2PP_INCLUDE_DIRS})
 
-target_link_libraries(SoftwareRasterizer PRIVATE ${SDL2PP_LIBRARIES})
-target_link_libraries(SoftwareRasterizer PRIVATE Catch2::Catch2 Catch2::Catch2WithMain)
-target_link_libraries(SoftwareRasterizer PRIVATE spdlog::spdlog)
-target_link_libraries(SoftwareRasterizer PRIVATE glm::glm)
-target_link_libraries(SoftwareRasterizer PRIVATE glad::glad)
-target_link_libraries(SoftwareRasterizer PRIVATE glfw)
+target_link_libraries(epsilon PRIVATE ${SDL2PP_LIBRARIES})
+target_link_libraries(epsilon PRIVATE Catch2::Catch2 Catch2::Catch2WithMain)
+target_link_libraries(epsilon PRIVATE spdlog::spdlog)
+target_link_libraries(epsilon PRIVATE glm::glm)
+target_link_libraries(epsilon PRIVATE glad::glad)
+target_link_libraries(epsilon PRIVATE glfw)
