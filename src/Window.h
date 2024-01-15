@@ -48,6 +48,8 @@ class Window {
 
     static void GlfwErrorCallback(int error_code, const char *description);
 
+    GLuint texture_sampling_mode_ = GL_NEAREST;
+
     GLuint screen_vao_;
     GLuint screen_program_;
     GLuint screen_texture_;

@@ -10,7 +10,7 @@ class Screen {
     Screen(int width, int height, Color color);
     ~Screen() = default;
 
-    [[nodiscard]] std::vector<Color> Pixels() const { return pixels_; }
+    [[nodiscard]] const std::vector<Color>& Pixels() const { return pixels_; }
     [[nodiscard]] int Width() const { return width_; }
     [[nodiscard]] int Height() const { return height_; }
 
@@ -20,7 +20,7 @@ class Screen {
     void RandomFill();
     void Clear(Color color);
 
-    Vector2 Texel();
+    Vector2 Texel() const;
 
   private:
     int width_;

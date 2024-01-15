@@ -100,11 +100,11 @@ void Window::RenderScreen(const Screen *screen) {
     glBindTexture(GL_TEXTURE_2D, screen_texture_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_sampling_mode_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_sampling_mode_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen->Width(), screen->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  screen->Pixels().data());
-    // glGenerateMipmap(screen_texture_);
+    glGenerateMipmap(screen_texture_);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -153,6 +153,14 @@ void Window::PollEvents() { glfwPollEvents(); }
 
 void Window::GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        if (window->texture_sampling_mode_ == GL_NEAREST) {
+            window->texture_sampling_mode_ = GL_LINEAR;
+        } else {
+            window->texture_sampling_mode_ = GL_NEAREST;
+        }
+    }
 }
 void Window::GlfwDropCallback(GLFWwindow *glfw_window, int path_count, const char *paths[]) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);

@@ -26,13 +26,17 @@ void Screen::SetPixel(Vector2Int pos, Color color) {
 }
 
 void Screen::RandomFill() {
-    for (size_t i = 0; i < width_ * height_; i++) {
+    for (size_t i = 0; i < (size_t)(width_ * height_); i++) {
         pixels_[i].r = (uint8_t)(rand() % 255);
         pixels_[i].g = (uint8_t)(rand() % 255);
         pixels_[i].b = (uint8_t)(rand() % 255);
     }
 }
 
-void Screen::Clear(Color color) { pixels_ = std::vector<Color>(width_ * height_, color); }
+void Screen::Clear(Color color) {
+    for (size_t i = 0; i < (size_t)(width_ * height_); i++) {
+        pixels_[i] = color;
+    }
+}
 
-Vector2 Screen::Texel() { return texel_; }
+Vector2 Screen::Texel() const { return texel_; }

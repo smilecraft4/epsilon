@@ -9,6 +9,6 @@ float Lerpf(float a, float b, float t) {
 
 // TODO: does this work ?
 uint8_t LerpUint8_t(uint8_t a, uint8_t b, float t) {
-    uint8_t c = floor(a * (1.0f - t) + b * t);
+    uint8_t c = a * (1.0f - t) + b * t;
     return c;
 }

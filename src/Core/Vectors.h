@@ -25,6 +25,13 @@ struct Vector4Int {
 struct Vector2 {
     float x;
     float y;
+
+    static Vector2 Lerp(const Vector2 &a, const Vector2 &b, float t) {
+        Vector2 c{};
+        c.x = Lerpf(a.x, b.x, t);
+        c.y = Lerpf(a.y, b.y, t);
+        return c;
+    }
 };
 
 struct Vector3 {
