@@ -24,6 +24,8 @@ class Window {
     void Cleanup();
 
     static void PollEvents();
+    static void Init(int argc, char **argv);
+    static void Terminate();
 
   private:
     int width_;
@@ -43,6 +45,8 @@ class Window {
     static void GlfwWindowFocusCallback(GLFWwindow *glfw_window, int focused);
     static void GlfwWindowRefreshCallback(GLFWwindow *glfw_window);
     static void GlfwFramebufferSizeCallback(GLFWwindow *glfw_window, int width, int height);
+
+    static void GlfwErrorCallback(int error_code, const char *description);
 
     GLuint screen_vao_;
     GLuint screen_program_;

@@ -15,8 +15,12 @@ class Screen {
     [[nodiscard]] int Height() const { return height_; }
 
     void Resize(int width, int height);
+    void SetPixel(int x, int y, Color color);
     void SetPixel(Vector2Int position, Color color);
     void RandomFill();
+    void Clear(Color color);
+
+    Vector2 Texel();
 
   private:
     int width_;
@@ -24,4 +28,5 @@ class Screen {
     Color background_color_;
 
     std::vector<Color> pixels_;
+    Vector2 texel_;
 };

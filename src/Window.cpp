@@ -59,6 +59,7 @@ Window::Window(int width, int height, std::string name) : width_(width), height_
 
     // FIXME: redondant for more than one window
     glfwMakeContextCurrent(glfw_window_);
+    glfwSwapInterval(1);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
     // Dummy vao to allow drawing the screen_quad/triangle
@@ -103,7 +104,7 @@ void Window::RenderScreen(const Screen *screen) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen->Width(), screen->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  screen->Pixels().data());
-    glGenerateMipmap(screen_texture_);
+    // glGenerateMipmap(screen_texture_);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -135,7 +136,21 @@ void Window::SetTitle(const std::string &title) {
 
 bool Window::Running() const { return !glfwWindowShouldClose(glfw_window_); }
 
+void Window::Init(int argc, char **argv) {
+
+    spdlog::info("{}", argv[0]);
+
+    if (!glfwInit()) {
+        spdlog::critical("Failed to initialiaze GLFW");
+    }
+
+    glfwSetErrorCallback(GlfwErrorCallback);
+}
+
+void Window::Terminate() { glfwTerminate(); }
+
 void Window::PollEvents() { glfwPollEvents(); }
+
 void Window::GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
 }
@@ -174,4 +189,8 @@ void Window::GlfwFramebufferSizeCallback(GLFWwindow *glfw_window, int width, int
     window->width_ = width;
     window->height_ = height;
     glViewport(0, 0, width, height);
+}
+
+void Window::GlfwErrorCallback(int error_code, const char *description) {
+    spdlog::error("{}: {}", error_code, description);
 }

@@ -1,38 +1,55 @@
+#include <format>
 
-#include <glad/glad.h>
-#include <spdlog/spdlog.h>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-
+#include "Core/Maths.h"
+#include "Rasterizer.h"
 #include "Screen.h"
 #include "Window.h"
 
-static void GlfwErrorCallback(int error_code, const char *description) {
-    spdlog::error("{}: {}", error_code, description);
-}
-
 int main(int argc, char *argv[]) {
-    spdlog::info("{}", argv[0]);
-
-    if (!glfwInit()) {
-        spdlog::critical("Failed to initialiaze GLFW");
-        return -1;
-    }
-
-    glfwSetErrorCallback(GlfwErrorCallback);
+    Window::Init(argc, argv);
 
     auto window = std::make_unique<Window>(800, 600, "Epsilon - Software Rasterizer");
-    auto screen = std::make_unique<Screen>(256, 224, 0xFF00FFFF);
+    auto screen = std::make_unique<Screen>(60, 60, 0x000000FF);
 
-    glfwSwapInterval(1);
+    Vertex a{};
+    a.position = {0.5f, 0.9f, 0.0f};
+    a.color = 0xFF0000FF;
+
+    Vertex b{};
+    b.position = {0.1f, 0.7f, 0.8f};
+    b.color = 0x0000FFFF;
+
+    Vector2Int a_pos{};
+    a_pos.x = floor(a.position.x * screen->Width());
+    a_pos.y = floor(a.position.y * screen->Height());
+    Vector2Int b_pos{};
+    b_pos.x = floor(b.position.x * screen->Width());
+    b_pos.y = floor(b.position.y * screen->Height());
+
     double last_time = 0, current_time = 0, delta_time = 0.0;
     while (window->Running()) {
         last_time = current_time;
         current_time = glfwGetTime();
         delta_time = current_time - last_time;
 
-        screen->RandomFill();
+        // Draw a Line
+        float time = (cos(current_time) + 1.0f) * 0.5f; // goes from 0 to 1
+
+        Vertex c{};
+        c.position = Vector3::Lerp(a.position, b.position, time);
+        c.color = Color::Lerp(a.color, b.color, time);
+
+        Vector2Int c_pos{};
+        c_pos.x = floor(c.position.x * screen->Width());
+        c_pos.y = floor(c.position.y * screen->Height());
+
+
+        screen->Clear(0x000000FF);
+
+        screen->SetPixel(a_pos, a.color);
+        screen->SetPixel(b_pos, b.color);
+
+        screen->SetPixel(c_pos, c.color);
 
         window->RenderScreen(screen.get());
         window->SetTitle(
@@ -43,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     window->Cleanup();
 
-    glfwTerminate();
+    Window::Terminate();
 
     return 0;
 }
