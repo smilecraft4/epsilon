@@ -67,16 +67,16 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
         } else {
             for (int i = 0; i < delta_y * y_direction; i++) {
                 const float y = i * y_direction;
-                //color_buffer_->SetPixel(a_s.x, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
-                color_buffer_->SetPixel(a_s.x, a_s.y + y, col);
+                color_buffer_->SetPixel(a_s.x, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
+                //color_buffer_->SetPixel(a_s.x, a_s.y + y, col);
             }
         }
     }
     if (delta_y == 0) {
         for (int i = 0; i < delta_x * x_direction; i++) {
             const float x = i * x_direction;
-            //color_buffer_->SetPixel(a_s.x + x, a_s.y, Color::Lerp(a.color, b.color, x / delta_x));
-            color_buffer_->SetPixel(a_s.x + x, a_s.y, col);
+            color_buffer_->SetPixel(a_s.x + x, a_s.y, Color::Lerp(a.color, b.color, x / delta_x));
+            // color_buffer_->SetPixel(a_s.x + x, a_s.y, col);
         }
     }
 
@@ -86,8 +86,8 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
         for (int i = 0; i < delta_x * x_direction; i++) {
             float x = i * x_direction;
 
-            //color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, Color::Lerp(a.color, b.color, x / delta_x));
-            color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, col);
+            color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, Color::Lerp(a.color, b.color, x / delta_x));
+            // color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, col);
         }
     } else {
         // biggest increment is delta_y so going for x = my+a
@@ -95,69 +95,8 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
         for (int i = 0; i < delta_y * y_direction; i++) {
             float y = i * y_direction;
 
-            //color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
-            color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, col);
+            color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
+            // color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, col);
         }
     }
-
-    // draw a straigth line
-    // if (a_s.y == b_s.y) {
-    //     // Same position
-    //     if (a_s.x == b_s.x) {
-    //         color_buffer_->SetPixel(a_s.x, a_s.y, a.color);
-    //     }
-    //     for (float x = 0; x < abs(b_s.x - a_s.x); x++) {
-    //         float t = x / abs(b_s.x - a_s.x);
-    //         if (a_s.x > b_s.x) {
-    //             t = 1 - t;
-    //         }
-    //         Color col = Color::Lerp(a.color, b.color, t);
-    //
-    //         color_buffer_->SetPixel(fmin(b_s.x, a_s.x) + x, a_s.y, col);
-    //     }
-    // }
-    // if (a_s.x == b_s.x) {
-    //     for (float y = 0; y < abs(b_s.y - a_s.y); y++) {
-    //         float t = y / abs(b_s.y - a_s.y);
-    //         // TODO: Reorder vertex from lowest to biggest based on this
-    //         if (a_s.y > b_s.y) {
-    //             t = 1 - t;
-    //         }
-    //         Color col = Color::Lerp(a.color, b.color, t);
-    //
-    //         color_buffer_->SetPixel(a_s.x, fmin(b_s.y, a_s.y) + y, col);
-    //     }
-    // }
-
-    // if (abs(b_s.x - a_s.x) > abs(b_s.y - a_s.y)) {
-    //     // x > y slope
-    //     // as y is smaller than x the value with the most "prescion" is x
-    //     float slope = (b_s.y - a_s.y) / (b_s.x - a_s.x);
-    //     for (float x = 0; x < abs(b_s.x - a_s.x); x++) {
-    //         float t = x / abs(b_s.x - a_s.x);
-    //         if (a_s.x > b_s.x) {
-    //             t = 1 - t;
-    //         }
-    //         Color col = Color::Lerp(a.color, b.color, t);
-    //
-    //         color_buffer_->SetPixel(fmin(b_s.x, a_s.x) + x, fmin(b_s.y, a_s.y) + (x * slope), col);
-    //     }
-    //
-    // } else {
-    //     // y > x slope
-    //     float slope = (b_s.x - a_s.x) / (b_s.y - a_s.y);
-    //     for (float y = 0; y < abs(b_s.y - a_s.y); y++) {
-    //         float t = y / abs(b_s.y - a_s.y);
-    //         if (a_s.y > b_s.y) {
-    //             t = 1 - t;
-    //         }
-    //         Color col = Color::Lerp(a.color, b.color, t);
-    //
-    //         color_buffer_->SetPixel(a_s.x + y * slope, fmin(a_s.y, a_s.y) + y, col);
-    //     }
-    // }
-
-    const float slope = (b_s.x - a_s.x) / (b_s.y - a_s.y);
-
-    color_buffer_->pixels[4] = Color(0, 0, 0);
 }

@@ -46,7 +46,7 @@ static void RandomVertices(int count, std::vector<Vertex> *vertices) {
 
 static void DrawPairOfLines(Rasterizer *rasterizer, const std::vector<Vertex> &vertices, float total_time, int count) {
     count = std::min((int)vertices.size(), count);
-    for (size_t i = 0; i < count / 2; i++) {
+    for (size_t i = 0; i < floor(count / 2); i++) {
         srand(i);
         float offset = RandomFloat(0.0f, 100.0f) * 10.0f;
 
@@ -74,14 +74,36 @@ class EpsilonWindow final : public Window {
         draw_lines_cursor_ = true;
         draw_lines_angled = true;
 
-        vertices_count_ = 16;
-
-        RandomVertices(vertices_count_, &vertices_);
+        constructing_line_ = false;
+        preview_vertex_ = cursor_;
+        preview_closed_loop_ = false;
+        line_color_ = RandomColor();
+        vertices_ = std::vector<std::vector<Vertex>>();
     }
     ~EpsilonWindow() { Window::~Window(); }
 
   protected:
     void OnRender(float delta_time) override {
+        rasterizer_->Clear();
+
+        for (size_t i = 0; i < vertices_.size(); i++) {
+            for (size_t j = 0; j < vertices_[i].size() - 1; j++) {
+                rasterizer_->DrawLine(vertices_[i][j + 0], vertices_[i][j + 1]);
+            }
+            for (size_t j = 0; j < vertices_[i].size(); j++) {
+                Vertex handle = vertices_[i][j];
+                handle.color = Color(255, 0, 0);
+                rasterizer_->DrawVertex(handle);
+            }
+        }
+        if (constructing_line_) {
+            Vertex next_point = preview_vertex_;
+            next_point.color = preview_closed_loop_ ? Color(255, 255, 255) : line_color_;
+            int index = vertices_.size() - 1;
+            rasterizer_->DrawLine(vertices_[index][vertices_[index].size() - 1], next_point);
+        }
+
+        /*
         Vertex a{.position = {-0.6f, 0.0f, 0.0f}, .color = {128, 0, 0}};
         Vertex b{.position = {0.7f, 0.0f, 0.0f}, .color = {128, 0, 128}};
         Vertex c{.position = {-0.6f, 0.75f, 0.0f}, .color = {0, 128, 0}};
@@ -89,10 +111,6 @@ class EpsilonWindow final : public Window {
 
         Vertex e{.position = {-0.8f, 0.1f, 0.0f}, .color = {0, 128, 0}};
         Vertex f{.position = {-0.8f, -0.9f, 0.0f}, .color = {128, 128, 0}};
-
-        rasterizer_->Clear();
-
-        DrawPairOfLines(rasterizer_.get(), vertices_, glfwGetTime(), vertices_count_);
 
         if (draw_lines_) {
             if (draw_lines_horizontal_) {
@@ -119,36 +137,81 @@ class EpsilonWindow final : public Window {
             }
         }
 
-        rasterizer_->DrawVertex(cursor_);
 
         rasterizer_->DrawVertex(a);
         rasterizer_->DrawVertex(b);
         rasterizer_->DrawVertex(c);
         rasterizer_->DrawVertex(d);
+        */
+
+        rasterizer_->DrawVertex(cursor_);
 
         RenderTexture(rasterizer_->ColorBuffer());
     }
 
     void OnResizeEvent(int width, int height) override {}
-
-    void OnMouseScrollEvent(float x, float y) override {
-        if (y > 0) {
-            vertices_count_ = std::min((int)(vertices_count_ * 1.5), 8192 * 8);
-            RandomVertices(vertices_count_, &vertices_);
-            spdlog::info("Number of lines: {}", vertices_count_);
-        } else if (y < 0) {
-            vertices_count_ = std::max((int)(vertices_count_ / 1.5), 1);
-            RandomVertices(vertices_count_, &vertices_);
-            spdlog::info("Number of lines: {}", vertices_count_);
-        }
-    }
+    void OnMouseScrollEvent(float x, float y) override {}
 
     void OnMouseMoveEvent(float x, float y) override {
         cursor_.position.x = x / width_ * 2.0f - 1.0f;
         cursor_.position.y = (y / height_ * 2.0f - 1.0f) * -1;
+
+        preview_vertex_ = cursor_;
+
+        if (constructing_line_) {
+            preview_vertex_ = cursor_;
+
+            int index = vertices_.size() - 1;
+            int last_index = vertices_[index].size() - 1;
+
+            const auto a = rasterizer_->ViewportToScreenspace(cursor_.position);
+            const auto b = rasterizer_->ViewportToScreenspace(vertices_[index][0].position);
+
+            if (Vector3::Distance(a, b) < 5.0f) {
+                preview_vertex_ = vertices_[index][0];
+
+                for (size_t i = 0; i < vertices_[index].size(); i++) {
+                    vertices_[index][i].color = Color(255, 255, 255);
+                }
+                preview_closed_loop_ = true;
+            } else if (preview_closed_loop_) {
+                for (size_t i = 0; i < vertices_[index].size(); i++) {
+                    vertices_[index][i].color = line_color_;
+                }
+                preview_closed_loop_ = false;
+            }
+        }
     }
 
-    void OnMouseButtonEvent(int button, int action) override {}
+    void OnMouseButtonEvent(int button, int action) override {
+        if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+            // add a new point
+            Vertex point{};
+            point.position = cursor_.position;
+            point.color = line_color_;
+
+            if (!constructing_line_) {
+                constructing_line_ = true;
+                vertices_.push_back(std::vector<Vertex>(1, point));
+            } else {
+                if (preview_closed_loop_) {
+                    point = preview_vertex_;
+                    point.color = Color(255, 255, 255);
+                    vertices_[vertices_.size() - 1].push_back(point);
+                    constructing_line_ = false;
+                } else {
+                    vertices_[vertices_.size() - 1].push_back(point);
+                }
+            }
+        }
+
+        if (button == GLFW_MOUSE_BUTTON_2 && action == GLFW_PRESS) {
+            constructing_line_ = false;
+
+            line_color_ = RandomColor();
+        }
+    }
+
     void OnKeyEvent(int key, int action) override {
         if (key == GLFW_KEY_L && action == GLFW_PRESS) {
             draw_lines_ = !draw_lines_;
@@ -165,9 +228,6 @@ class EpsilonWindow final : public Window {
         if (key == GLFW_KEY_C && action == GLFW_PRESS) {
             draw_lines_angled = !draw_lines_angled;
         }
-        if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-            RandomVertices(vertices_count_, &vertices_);
-        }
     }
 
   private:
@@ -181,9 +241,11 @@ class EpsilonWindow final : public Window {
     bool draw_lines_angled;
     bool draw_lines_cursor_;
 
-    int vertices_count_;
-    int vertices_display_count;
-    std::vector<Vertex> vertices_;
+    bool preview_closed_loop_;
+    bool constructing_line_;
+    Color line_color_;
+    Vertex preview_vertex_;
+    std::vector<std::vector<Vertex>> vertices_;
 };
 
 int main(int argc, char *argv[]) {
