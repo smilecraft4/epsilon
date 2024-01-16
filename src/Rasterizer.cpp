@@ -45,13 +45,19 @@ Rasterizer::Rasterizer(int width, int height) : width_(width), height_(height) {
     color_buffer_ = std::make_unique<Texture<Color>>(width_, height_);
     color_buffer_->Fill(Color(0, 0, 0));
 
+    depth_buffer_ = std::make_unique<Texture<uint16_t>>(width_, height_);
+    depth_buffer_->Fill(0xFFFFu);
+
     far_clip = 5.0f;
     near_clip = -5.0f;
 }
 
 static float sign(float val) { return (0.0f < val) - (val < 0.0f); }
 
-void Rasterizer::Clear() { color_buffer_->Fill({0, 0, 0}); }
+void Rasterizer::Clear() {
+    color_buffer_->Fill({0, 0, 0});
+    depth_buffer_->Fill(0xFFFFu);
+}
 
 void Rasterizer::DrawVertex(Vertex a) {
     a.position = ViewportToScreenspace(a.position);
@@ -75,18 +81,35 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
 
     if (delta_x == 0) {
         if (delta_y == 0) {
+            if (depth_buffer_->GetPixel(a_s.y, a_s.y) <= (a_s.z * (UINT16_MAX))) {
+                return;
+            }
+            depth_buffer_->SetPixel(a_s.x, a_s.y, a_s.z);
             color_buffer_->SetPixel(a_s.x, a_s.y, a.color);
         } else {
             for (int i = 0; i < delta_y * y_direction; i++) {
                 const float y = i * y_direction;
+
+                uint16_t depth = std::lerp(a_s.z, b_s.z, y / delta_y) * (UINT16_MAX);
+                if (depth_buffer_->GetPixel(a_s.y, a_s.y + y) <= depth) {
+                    return;
+                }
+                depth_buffer_->SetPixel(a_s.x, a_s.y + y, depth);
+
                 color_buffer_->SetPixel(a_s.x, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
-                // color_buffer_->SetPixel(a_s.x, a_s.y + y, col);
             }
         }
     }
     if (delta_y == 0) {
         for (int i = 0; i < delta_x * x_direction; i++) {
             const float x = i * x_direction;
+
+            uint16_t depth = std::lerp(a_s.z, b_s.z, x / delta_x) * (UINT16_MAX);
+            if (depth_buffer_->GetPixel(a_s.x + x, a_s.y) <= depth) {
+                return;
+            }
+            depth_buffer_->SetPixel(a_s.x + x, a_s.y, depth);
+
             color_buffer_->SetPixel(a_s.x + x, a_s.y, Color::Lerp(a.color, b.color, x / delta_x));
             // color_buffer_->SetPixel(a_s.x + x, a_s.y, col);
         }
@@ -98,6 +121,12 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
         for (int i = 0; i < delta_x * x_direction; i++) {
             float x = i * x_direction;
 
+            uint16_t depth = std::lerp(a_s.z, b_s.z, x / delta_x) * (UINT16_MAX);
+            if (depth_buffer_->GetPixel(a_s.x + x, a_s.y + slope * x) <= depth) {
+                return;
+            }
+            depth_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, depth);
+
             color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, Color::Lerp(a.color, b.color, x / delta_x));
             // color_buffer_->SetPixel(a_s.x + x, a_s.y + slope * x, col);
         }
@@ -106,6 +135,12 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
         const float slope = delta_x / delta_y;
         for (int i = 0; i < delta_y * y_direction; i++) {
             float y = i * y_direction;
+
+            uint16_t depth = std::lerp(a_s.z, b_s.z, y / delta_y) * (UINT16_MAX);
+            if (depth_buffer_->GetPixel(a_s.x + slope * y, a_s.y + y) <= depth) {
+                return;
+            }
+            depth_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, depth);
 
             color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
             // color_buffer_->SetPixel(a_s.x + slope * y, a_s.y + y, col);

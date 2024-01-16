@@ -51,5 +51,5 @@ class Rasterizer {
     int height_;
 
     std::unique_ptr<Texture<Color>> color_buffer_;
-    // std::unique_ptr<Texture<uint16_t>> depth_buffer_;
+    std::unique_ptr<Texture<uint16_t>> depth_buffer_;
 };

@@ -6,8 +6,8 @@
 #include "Core/Colors.h"
 
 template <typename T>
-concept PixelFormat =
-    std::is_same<T, Color>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value;
+concept PixelFormat = std::is_same<T, Color>::value || std::is_same<T, uint16_t>::value ||
+                      std::is_same<T, uint32_t>::value || std::is_same<T, float>::value;
 
 template <PixelFormat T> struct Texture {
     size_t width;

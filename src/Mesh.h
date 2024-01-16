@@ -74,6 +74,8 @@ struct Model {
         std::vector<Vector3> obj_pos{};
         std::vector<Vector3> obj_nrml{};
 
+        Color col;
+
         Model model{};
 
         // Load the file
@@ -99,6 +101,7 @@ struct Model {
                     model.meshes_names.push_back(tokens[1]);
                     Mesh dummy_mesh{};
                     model.meshes.push_back(dummy_mesh);
+                    col = Color(rand() % 255, rand() % 255, rand() % 255);
                 } else if (tokens[0] == "v") {
                     Vector3 pos{};
                     pos.x = std::atof(tokens[1].c_str());
@@ -127,6 +130,7 @@ struct Model {
                         // vertex.color = Color(vertex.uv.x * 255, vertex.uv.y * 255, 0);
                         // vertex.color = Color(255, 255, 255);
                         vertex.color = Color(rand() % 255, rand() % 255, rand() % 255);
+                        vertex.color = col;
 
                         // TODO: use indices
                         model.meshes[model.meshes.size() - 1].vertices.push_back(vertex);

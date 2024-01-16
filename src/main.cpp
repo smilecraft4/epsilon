@@ -79,7 +79,7 @@ class EpsilonWindow final : public Window {
 
         cube_ = Model::LoadFromObj("./data/meshes/SM_Cube.obj");
         quad_ = Model::LoadFromObj("./data/meshes/SM_Quad.obj");
-        tri_ = Model::LoadFromObj("./data/meshes/SM_Triangle.obj");
+        tri_ = Model::LoadFromObj("./data/meshes/SM_Quad.obj");
     }
     ~EpsilonWindow() { Window::~Window(); }
 
@@ -89,7 +89,7 @@ class EpsilonWindow final : public Window {
 
         if (rotate_model_) {
             for (size_t i = 0; i < cube_.meshes.size(); i++) {
-                const Vector3 rotation_rate = Vector3(1.5f, 0.25f, 1.005f) * delta_time;
+                const Vector3 rotation_rate = Vector3(0.0f, 0.25f, 0.0f) * delta_time;
                 for (size_t j = 0; j < cube_.meshes[i].vertices.size(); j++) {
 
                     //  Point of Rotation = (X1, Y1, Z1)
@@ -157,14 +157,6 @@ class EpsilonWindow final : public Window {
                     rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 0], cube_.meshes[i].vertices[j * 3 + 1]);
                     rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 1], cube_.meshes[i].vertices[j * 3 + 2]);
                     rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 2], cube_.meshes[i].vertices[j * 3 + 0]);
-                }
-            }
-
-            for (size_t i = 0; i < cube_.meshes.size(); i++) {
-                for (size_t j = 0; j < cube_.meshes[i].vertices.size() / 3; j++) {
-                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 0], cursor_);
-                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 1], cursor_);
-                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 2], cursor_);
                 }
             }
         }
