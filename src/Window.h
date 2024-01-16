@@ -35,6 +35,7 @@ class Window {
     virtual void OnMouseMoveEvent(float x, float y) = 0;
     virtual void OnKeyEvent(int key, int action) = 0;
     virtual void OnMouseButtonEvent(int button, int action) = 0;
+    virtual void OnMouseScrollEvent(float x, float y) = 0;
 
     int width_;
     int height_;

@@ -156,7 +156,7 @@ void Window::Cleanup() {
 
 void Window::Render(float delta_time) {
     OnRender(delta_time);
-    //glfwSwapBuffers(glfw_window_);
+    // glfwSwapBuffers(glfw_window_);
 }
 
 void Window::SetTitle(const std::string &title) {
@@ -199,6 +199,7 @@ void Window::GlfwKeyCallback(GLFWwindow *glfw_window, int key, int scancode, int
 }
 void Window::GlfwScrollCallback(GLFWwindow *glfw_window, double xoffset, double yoffset) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);
+    window->OnMouseScrollEvent(xoffset, yoffset);
 }
 void Window::GlfwCursorPosCallback(GLFWwindow *glfw_window, double xpos, double ypos) {
     auto window = (Window *)glfwGetWindowUserPointer(glfw_window);

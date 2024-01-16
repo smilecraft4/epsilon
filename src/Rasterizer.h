@@ -43,7 +43,7 @@ class Rasterizer {
     const Texture<Color> *ColorBuffer();
 
   private:
-    Vector3 ViewportToScreenspace(Vector3 a);
+    Vector3 ViewportToScreenspace(Vector3 a, bool clamp = true);
 
     int width_;
     int height_;
