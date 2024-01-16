@@ -39,6 +39,37 @@ struct Vector3 {
     float y;
     float z;
 
+    Vector3 operator+(Vector3 const &rhs) const {
+        Vector3 vec{};
+        vec.x = this->x + rhs.x;
+        vec.y = this->y + rhs.y;
+        vec.z = this->z + rhs.z;
+        return vec;
+    }
+
+    Vector3 operator-(Vector3 const &rhs) const {
+        Vector3 vec{};
+        vec.x = this->x - rhs.x;
+        vec.y = this->y - rhs.y;
+        vec.z = this->z - rhs.z;
+        return vec;
+    }
+
+    Vector3 operator*(float const &rhs) const {
+        Vector3 vec{};
+        vec.x = this->x * rhs;
+        vec.y = this->y * rhs;
+        vec.z = this->z * rhs;
+        return vec;
+    }
+
+    Vector3 operator/(float const &rhs) const {
+        Vector3 vec{};
+        vec.x = this->x / rhs;
+        vec.y = this->y / rhs;
+        vec.z = this->z / rhs;
+        return vec;
+    }
     static Vector3 Lerp(const Vector3 &a, const Vector3 &b, float t) {
         Vector3 c{};
         c.x = Lerpf(a.x, b.x, t);

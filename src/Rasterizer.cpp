@@ -20,6 +20,9 @@ Vector3 Rasterizer::ViewportToScreenspace(Vector3 viewport, bool clamp) {
     |(-1.0,-1.0)                  ( 1.0,-1.0)|                     |(0,0)                          width-1,0)|
     +----------------------------------------+                     +-----------------------------------------+
 
+    (near_clip)                     (far_clip)                      (0.0)                                (1.0)
+    +----------------------------------------+                      +----------------------------------------+
+
     */
 
     // -1.0     x                               1.0
@@ -27,8 +30,13 @@ Vector3 Rasterizer::ViewportToScreenspace(Vector3 viewport, bool clamp) {
     // 0.0      (x+1.0)/2.0                     1.0
     // 0.0      ((x+1.0)/2.0)*(width-1)         width-1
 
+    // near         z                           far
+    // 0.0          z-near                      far - near
+    // 0.0          (z-near)(far-near)          1.0
+
     viewport.x = floor(((viewport.x + 1.0) / 2.0) * (color_buffer_->width - 1));
     viewport.y = floor(((viewport.y + 1.0) / 2.0) * (color_buffer_->height - 1));
+    viewport.z = (viewport.z - near_clip) / (far_clip - near_clip);
 
     return viewport;
 }
@@ -36,6 +44,9 @@ Vector3 Rasterizer::ViewportToScreenspace(Vector3 viewport, bool clamp) {
 Rasterizer::Rasterizer(int width, int height) : width_(width), height_(height) {
     color_buffer_ = std::make_unique<Texture<Color>>(width_, height_);
     color_buffer_->Fill(Color(0, 0, 0));
+
+    far_clip = 5.0f;
+    near_clip = -5.0f;
 }
 
 static float sign(float val) { return (0.0f < val) - (val < 0.0f); }
@@ -59,7 +70,8 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
     const float x_direction = sign(delta_x);
     const float y_direction = sign(delta_y);
 
-    const Color col(255, 255, 0);
+    a.color = a.color * (1.0 - a_s.z);
+    b.color = b.color * (1.0 - b_s.z);
 
     if (delta_x == 0) {
         if (delta_y == 0) {
@@ -68,7 +80,7 @@ void Rasterizer::DrawLine(Vertex a, Vertex b) {
             for (int i = 0; i < delta_y * y_direction; i++) {
                 const float y = i * y_direction;
                 color_buffer_->SetPixel(a_s.x, a_s.y + y, Color::Lerp(a.color, b.color, y / delta_y));
-                //color_buffer_->SetPixel(a_s.x, a_s.y + y, col);
+                // color_buffer_->SetPixel(a_s.x, a_s.y + y, col);
             }
         }
     }

@@ -235,7 +235,7 @@ void Window::GlfwFramebufferSizeCallback(GLFWwindow *glfw_window, int width, int
 
     window->OnResizeEvent(width, height);
 
-    window->Render(1.0f);
+    // window->Render(1.0f);
 }
 
 void Window::GlfwErrorCallback(int error_code, const char *description) {

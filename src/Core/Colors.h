@@ -10,6 +10,15 @@ struct Color {
     uint8_t b;
     uint8_t a;
 
+    Color operator*(float const &rhs) const {
+        Color col{};
+        col.r = (uint8_t)(this->r * rhs);
+        col.g = (uint8_t)(this->g * rhs);
+        col.b = (uint8_t)(this->b * rhs);
+        col.a = this->a;
+        return col;
+    }
+
     Color(uint32_t color = 0x000000FF) {
         this->r = (std::uint8_t)(color >> 24);
         this->g = (std::uint8_t)(color >> 16);

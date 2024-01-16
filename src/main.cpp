@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Core/Maths.h"
+#include "Mesh.h"
 #include "Rasterizer.h"
 #include "Texture.h"
 #include "Window.h"
@@ -64,21 +65,21 @@ static void DrawPairOfLines(Rasterizer *rasterizer, const std::vector<Vertex> &v
 class EpsilonWindow final : public Window {
   public:
     EpsilonWindow() : Window(800, 600, "Epsilon Rasterizer") {
+        spdlog::set_level(spdlog::level::info);
+
         rasterizer_ = std::make_unique<Rasterizer>(256, 224);
 
         cursor_ = {.position = {0.0f, 0.0f, 0.0f}, .color = {255, 255, 255}};
 
-        draw_lines_ = true;
-        draw_lines_horizontal_ = true;
-        draw_lines_vertical_ = true;
-        draw_lines_cursor_ = true;
-        draw_lines_angled = true;
+        rotate_model_ = true;
 
-        constructing_line_ = false;
-        preview_vertex_ = cursor_;
-        preview_closed_loop_ = false;
-        line_color_ = RandomColor();
-        vertices_ = std::vector<std::vector<Vertex>>();
+        draw_cube_ = false;
+        draw_quad_ = false;
+        draw_tri_ = true;
+
+        cube_ = Model::LoadFromObj("./data/meshes/SM_Cube.obj");
+        quad_ = Model::LoadFromObj("./data/meshes/SM_Quad.obj");
+        tri_ = Model::LoadFromObj("./data/meshes/SM_Triangle.obj");
     }
     ~EpsilonWindow() { Window::~Window(); }
 
@@ -86,63 +87,87 @@ class EpsilonWindow final : public Window {
     void OnRender(float delta_time) override {
         rasterizer_->Clear();
 
-        for (size_t i = 0; i < vertices_.size(); i++) {
-            for (size_t j = 0; j < vertices_[i].size() - 1; j++) {
-                rasterizer_->DrawLine(vertices_[i][j + 0], vertices_[i][j + 1]);
-            }
-            for (size_t j = 0; j < vertices_[i].size(); j++) {
-                Vertex handle = vertices_[i][j];
-                handle.color = Color(255, 0, 0);
-                rasterizer_->DrawVertex(handle);
-            }
-        }
-        if (constructing_line_) {
-            Vertex next_point = preview_vertex_;
-            next_point.color = preview_closed_loop_ ? Color(255, 255, 255) : line_color_;
-            int index = vertices_.size() - 1;
-            rasterizer_->DrawLine(vertices_[index][vertices_[index].size() - 1], next_point);
-        }
+        if (rotate_model_) {
+            for (size_t i = 0; i < cube_.meshes.size(); i++) {
+                const Vector3 rotation_rate = Vector3(1.5f, 0.25f, 1.005f) * delta_time;
+                for (size_t j = 0; j < cube_.meshes[i].vertices.size(); j++) {
 
-        /*
-        Vertex a{.position = {-0.6f, 0.0f, 0.0f}, .color = {128, 0, 0}};
-        Vertex b{.position = {0.7f, 0.0f, 0.0f}, .color = {128, 0, 128}};
-        Vertex c{.position = {-0.6f, 0.75f, 0.0f}, .color = {0, 128, 0}};
-        Vertex d{.position = {0.7f, 0.75f, 0.0f}, .color = {128, 128, 0}};
+                    //  Point of Rotation = (X1, Y1, Z1)
+                    //  Point Location    = (X1+A, Y1+B, Z1+C)
 
-        Vertex e{.position = {-0.8f, 0.1f, 0.0f}, .color = {0, 128, 0}};
-        Vertex f{.position = {-0.8f, -0.9f, 0.0f}, .color = {128, 128, 0}};
+                    const Vector3 pivot_point = Vector3(0.0, 0.0, 0.0);
+                    const Vector3 original_pos = cube_.meshes[i].vertices[j].position;
 
-        if (draw_lines_) {
-            if (draw_lines_horizontal_) {
-                rasterizer_->DrawLine(a, b);
-                rasterizer_->DrawLine(c, d);
+                    //  (Point Location - Point of Rotation) = (A, B, C).
+                    Vector3 offset_pos = original_pos - pivot_point;
+                    Vector3 x_rot = offset_pos;
+                    Vector3 y_rot = offset_pos;
+                    Vector3 z_rot = offset_pos;
 
-                rasterizer_->DrawLine(e, f);
-            }
-            if (draw_lines_vertical_) {
-                rasterizer_->DrawLine(a, c);
-                rasterizer_->DrawLine(b, d);
-            }
+                    //  A' = A*cos ZAngle - B*sin ZAngle
+                    //  B' = A*sin ZAngle + B*cos ZAngle
+                    //  C' = C.
+                    z_rot.x = offset_pos.x * cos(rotation_rate.z) - offset_pos.y * sin(rotation_rate.z);
+                    z_rot.y = offset_pos.x * sin(rotation_rate.z) + offset_pos.y * cos(rotation_rate.z);
+                    z_rot.z = offset_pos.z;
 
-            if (draw_lines_angled) {
-                rasterizer_->DrawLine(a, d);
-                rasterizer_->DrawLine(b, c);
-            }
+                    //  C'' = C'*cos YAngle - A'*sin YAngle
+                    //  A'' = C'*sin YAngle + A'*cos YAngle
+                    //  B'' = B'
+                    y_rot.z = z_rot.z * cos(rotation_rate.y) - z_rot.x * sin(rotation_rate.y);
+                    y_rot.x = z_rot.z * sin(rotation_rate.y) + z_rot.x * cos(rotation_rate.y);
+                    y_rot.y = z_rot.y;
 
-            if (draw_lines_cursor_) {
-                rasterizer_->DrawLine(a, cursor_);
-                rasterizer_->DrawLine(b, cursor_);
-                rasterizer_->DrawLine(c, cursor_);
-                rasterizer_->DrawLine(d, cursor_);
+                    //  B''' = B''*cos XAngle - C''*sin XAngle
+                    //  C''' = B''*sin XAngle + C''*cos XAngle
+                    //  A''' = A''
+                    x_rot.y = y_rot.y * cos(rotation_rate.x) - y_rot.z * sin(rotation_rate.x);
+                    x_rot.z = y_rot.y * sin(rotation_rate.x) + y_rot.z * cos(rotation_rate.x);
+                    x_rot.x = y_rot.x;
+
+                    // Rotated Point = (X1+A''', Y1+B''', Z1+C''');
+                    cube_.meshes[i].vertices[j].position = pivot_point + x_rot;
+                }
             }
         }
 
+        if (draw_tri_) {
+            for (size_t i = 0; i < tri_.meshes.size(); i++) {
+                for (size_t j = 0; j < tri_.meshes[i].vertices.size() / 3; j++) {
+                    rasterizer_->DrawLine(tri_.meshes[i].vertices[j * 3 + 0], tri_.meshes[i].vertices[j * 3 + 1]);
+                    rasterizer_->DrawLine(tri_.meshes[i].vertices[j * 3 + 1], tri_.meshes[i].vertices[j * 3 + 2]);
+                    rasterizer_->DrawLine(tri_.meshes[i].vertices[j * 3 + 2], tri_.meshes[i].vertices[j * 3 + 0]);
+                }
+            }
+        }
 
-        rasterizer_->DrawVertex(a);
-        rasterizer_->DrawVertex(b);
-        rasterizer_->DrawVertex(c);
-        rasterizer_->DrawVertex(d);
-        */
+        if (draw_quad_) {
+            for (size_t i = 0; i < quad_.meshes.size(); i++) {
+                for (size_t j = 0; j < quad_.meshes[i].vertices.size() / 3; j++) {
+                    rasterizer_->DrawLine(quad_.meshes[i].vertices[j * 3 + 0], quad_.meshes[i].vertices[j * 3 + 1]);
+                    rasterizer_->DrawLine(quad_.meshes[i].vertices[j * 3 + 1], quad_.meshes[i].vertices[j * 3 + 2]);
+                    rasterizer_->DrawLine(quad_.meshes[i].vertices[j * 3 + 2], quad_.meshes[i].vertices[j * 3 + 0]);
+                }
+            }
+        }
+
+        if (draw_cube_) {
+            for (size_t i = 0; i < cube_.meshes.size(); i++) {
+                for (size_t j = 0; j < cube_.meshes[i].vertices.size() / 3; j++) {
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 0], cube_.meshes[i].vertices[j * 3 + 1]);
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 1], cube_.meshes[i].vertices[j * 3 + 2]);
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 2], cube_.meshes[i].vertices[j * 3 + 0]);
+                }
+            }
+
+            for (size_t i = 0; i < cube_.meshes.size(); i++) {
+                for (size_t j = 0; j < cube_.meshes[i].vertices.size() / 3; j++) {
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 0], cursor_);
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 1], cursor_);
+                    rasterizer_->DrawLine(cube_.meshes[i].vertices[j * 3 + 2], cursor_);
+                }
+            }
+        }
 
         rasterizer_->DrawVertex(cursor_);
 
@@ -150,105 +175,51 @@ class EpsilonWindow final : public Window {
     }
 
     void OnResizeEvent(int width, int height) override {}
-    void OnMouseScrollEvent(float x, float y) override {}
+    void OnMouseScrollEvent(float x, float y) override {
+        rasterizer_->near_clip = std::min(-0.01f, rasterizer_->near_clip - (y * 0.05f));
+        rasterizer_->far_clip = std::max(0.01f, rasterizer_->far_clip + (y * 0.05f));
 
+        spdlog::info("near_clip = {}, far_clip = {}", rasterizer_->near_clip, rasterizer_->far_clip);
+    }
     void OnMouseMoveEvent(float x, float y) override {
         cursor_.position.x = x / width_ * 2.0f - 1.0f;
         cursor_.position.y = (y / height_ * 2.0f - 1.0f) * -1;
-
-        preview_vertex_ = cursor_;
-
-        if (constructing_line_) {
-            preview_vertex_ = cursor_;
-
-            int index = vertices_.size() - 1;
-            int last_index = vertices_[index].size() - 1;
-
-            const auto a = rasterizer_->ViewportToScreenspace(cursor_.position);
-            const auto b = rasterizer_->ViewportToScreenspace(vertices_[index][0].position);
-
-            if (Vector3::Distance(a, b) < 5.0f) {
-                preview_vertex_ = vertices_[index][0];
-
-                for (size_t i = 0; i < vertices_[index].size(); i++) {
-                    vertices_[index][i].color = Color(255, 255, 255);
-                }
-                preview_closed_loop_ = true;
-            } else if (preview_closed_loop_) {
-                for (size_t i = 0; i < vertices_[index].size(); i++) {
-                    vertices_[index][i].color = line_color_;
-                }
-                preview_closed_loop_ = false;
-            }
-        }
     }
-
-    void OnMouseButtonEvent(int button, int action) override {
-        if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
-            // add a new point
-            Vertex point{};
-            point.position = cursor_.position;
-            point.color = line_color_;
-
-            if (!constructing_line_) {
-                constructing_line_ = true;
-                vertices_.push_back(std::vector<Vertex>(1, point));
-            } else {
-                if (preview_closed_loop_) {
-                    point = preview_vertex_;
-                    point.color = Color(255, 255, 255);
-                    vertices_[vertices_.size() - 1].push_back(point);
-                    constructing_line_ = false;
-                } else {
-                    vertices_[vertices_.size() - 1].push_back(point);
-                }
-            }
-        }
-
-        if (button == GLFW_MOUSE_BUTTON_2 && action == GLFW_PRESS) {
-            constructing_line_ = false;
-
-            line_color_ = RandomColor();
-        }
-    }
-
+    void OnMouseButtonEvent(int button, int action) override {}
     void OnKeyEvent(int key, int action) override {
-        if (key == GLFW_KEY_L && action == GLFW_PRESS) {
-            draw_lines_ = !draw_lines_;
+        if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+            draw_cube_ = !draw_cube_;
         }
-        if (key == GLFW_KEY_H && action == GLFW_PRESS) {
-            draw_lines_horizontal_ = !draw_lines_horizontal_;
+        if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+            draw_tri_ = !draw_tri_;
         }
-        if (key == GLFW_KEY_V && action == GLFW_PRESS) {
-            draw_lines_vertical_ = !draw_lines_vertical_;
+        if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
+            draw_quad_ = !draw_quad_;
         }
-        if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-            draw_lines_cursor_ = !draw_lines_cursor_;
-        }
-        if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-            draw_lines_angled = !draw_lines_angled;
+
+        if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+            rotate_model_ = !rotate_model_;
         }
     }
 
   private:
     Vertex cursor_;
 
+    bool rotate_model_;
+
+    bool draw_cube_;
+    bool draw_quad_;
+    bool draw_tri_;
+
+    Model cube_;
+    Model quad_;
+    Model tri_;
+
     std::unique_ptr<Rasterizer> rasterizer_;
-
-    bool draw_lines_;
-    bool draw_lines_horizontal_;
-    bool draw_lines_vertical_;
-    bool draw_lines_angled;
-    bool draw_lines_cursor_;
-
-    bool preview_closed_loop_;
-    bool constructing_line_;
-    Color line_color_;
-    Vertex preview_vertex_;
-    std::vector<std::vector<Vertex>> vertices_;
 };
 
 int main(int argc, char *argv[]) {
+    spdlog::set_level(spdlog::level::debug);
     Window::Init(argc, argv);
 
     EpsilonWindow window;
